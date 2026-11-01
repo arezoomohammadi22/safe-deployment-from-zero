@@ -1,0 +1,39 @@
+groups:
+  - name: safe-deployment-demo
+    interval: 5s
+    rules:
+      - alert: ShopHealthProbeFailed
+        expr: probe_success{job="blackbox-health"} == 0
+        for: 20s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Shop /health probe has failed"
+          description: "Blackbox Exporter cannot validate the public NGINX /health endpoint."
+
+      - alert: ShopCheckoutProbeFailed
+        expr: probe_success{job="blackbox-checkout"} == 0
+        for: 20s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Public checkout probe is failing"
+          description: "The synthetic POST to /api/checkout failed repeatedly."
+
+      - alert: CanaryCheckoutErrors
+        expr: sum(increase(shop_http_requests_total{app_version="v2",route="/api/checkout",status=~"5.."}[1m])) >= 3
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Canary v2 has at least 3 checkout 5xx responses in 1 minute"
+          description: "Review v2; pause rollout and consider traffic rollback to v1."
+
+      - alert: CanaryUnreachable
+        expr: up{job="shop-app",instance="app-v2:8000"} == 0
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus cannot scrape the v2 app"
+          description: "The /metrics endpoint of v2 is not reachable."

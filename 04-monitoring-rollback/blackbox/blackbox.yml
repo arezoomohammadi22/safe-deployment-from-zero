@@ -1,0 +1,23 @@
+modules:
+  http_health:
+    prober: http
+    timeout: 3s
+    http:
+      method: GET
+      preferred_ip_protocol: ip4
+      valid_status_codes: [200]
+      fail_if_body_not_matches_regexp:
+        - '"status": "ok"'
+
+  checkout_post:
+    prober: http
+    timeout: 3s
+    http:
+      method: POST
+      preferred_ip_protocol: ip4
+      valid_status_codes: [200]
+      headers:
+        Content-Type: application/json
+      body: '{"items":[{"sku":"keyboard","quantity":2}]}'
+      fail_if_body_not_matches_regexp:
+        - '"total_cents": 9599'
