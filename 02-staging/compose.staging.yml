@@ -1,0 +1,24 @@
+# Staging has its own Compose project, network, container, and loopback port.
+services:
+  checkout:
+    image: ${STAGING_IMAGE:-safe-demo:candidate-good}
+    environment:
+      APP_VERSION: ${STAGING_VERSION:-v2}
+    ports:
+      - "127.0.0.1:${STAGING_PORT:-18081}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,urllib.request; r=urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2); assert r.status == 200 and json.load(r)['status']=='ok'"]
+      interval: 5s
+      timeout: 3s
+      retries: 4
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    labels:
+      org.sananet.lab.environment: "staging"
